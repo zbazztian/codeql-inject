@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import glob
+from os.path import join, isdir, dirname, isfile, dirname
+import yaml
+import re
+import sys
+import shutil
+
+CUSTOMIZATIONS_LIB_NAME = 'injected_customization_lib'
+QLPACK_NAME_PATTERN = re.compile('^(name:\s+)(\S+)(.*)$', re.MULTILINE)
+QLPACK_VERSION_PATTERN = re.compile('^(version:\s+)(\S+)(.*)$', re.MULTILINE)
+SUPPORTED_LANGUAGES = [
+  'java',
+  'javascript',
+  'python',
+  'cpp',
+  'csharp',
+  'go'
+]
+QLPACK_LANG_PATTERN = re.compile("^codeql/([^-]+)-(queries|all)$", re.MULTILINE)
+
+
+def error(msg):
+  print('ERROR: ' + msg)
+  sys.exit(1)
+
+
+def info(msg):
+  print('INFO: ' + msg)
+
+
+def read_file(fpath):
+  with open(fpath, 'r') as f:
+    return f.read()
+
+
+def write_file(fpath, contents):
+  with open(fpath, 'w') as f:
+    f.write(contents)
+
+
+def get_pack_desc(pack):
+  return read_file(join(pack, 'qlpack.yml'))
+
+
+def set_pack_desc(pack, desc):
+  write_file(join(pack, 'qlpack.yml'), desc)
+
+
+def get_pack_info(packdir):
+  contents = get_pack_desc(packdir)
+  nmatch = QLPACK_NAME_PATTERN.search(contents)
+  vmatch = QLPACK_VERSION_PATTERN.search(contents)
+  if not nmatch or not vmatch:
+    raise Exception('Unable to parse {qlpackyml}'.format(qlpackyml=qlpackyml))
+  name = nmatch.group(2)
+  version = vmatch.group(2)
+  lang = None
+  pack_type = None
+  lmatch = QLPACK_LANG_PATTERN.search(name)
+  if lmatch:
+    lang = lmatch.group(1)
+    pack_type = lmatch.group(2)
+  return name, version, lang, pack_type
+
+
+def set_pack_info(packdir, name, version):
+  contents = get_pack_desc(packdir)
+  contents = re.sub(QLPACK_NAME_PATTERN, '\g<1>' + name + '\g<3>', contents)
+  contents = re.sub(QLPACK_VERSION_PATTERN, '\g<1>' + version + '\g<3>', contents)
+  set_pack_desc(packdir, contents)
+
+
+def find_packs(under):
+  for p, dirs, files in os.walk(under):
+    if 'qlpack.yml' in files:
+      yield p
+
+
+def is_supported_pack(pack):
+  _, _, lang, _ = get_pack_info(pack)
+  return lang in SUPPORTED_LANGUAGES
+
+
+def get_lib_pack(pack):
+  _, _, lang, _ = get_pack_info(pack)
+  for p in find_packs(pack):
+    name, _, _, _ = get_pack_info(p)
+    if name == 'codeql/{lang}-all'.format(lang=lang):
+      return p
+
+
+def get_pack_root_qll(pack):
+  _, _, plang, _ = get_pack_info(pack)
+  return join(pack, plang + '.qll')
+
+
+def parse_version(versionstr):
+  version = [int(v) for v in versionstr.split('.')]
+  if len(version) != 3:
+    raise Exception('Invalid length')
+  return version
+
+
+def version2str(version):
+  return '.'.join([str(v) for v in version])
+
+
+def inject_import(qllpath, importname):
+  IMPORT_CUSTOMIZATIONS_LIB_PATTERN = re.compile(
+    '^\s*import\s+' + re.escape(importname) + '\s*$',
+    re.MULTILINE
+  )
+
+  contents = read_file(qllpath)
+
+  if IMPORT_CUSTOMIZATIONS_LIB_PATTERN.search(contents):
+    info('Customizations were already injected. Nothing to be done.')
+  else:
+    contents = contents + '\n' + 'import ' + importname
+    write_file(qllpath, contents)
+
+
+def inject(args):
+  if not isfile(args.qll):
+    error('"{qll}" is not a file!'.format(qll=args.qll))
+
+  if not isdir(args.pack):
+    error('"{pack}" is not a valid directory!'.format(pack=args.pack))
+
+  # get target package information
+  packn, packv, plang, ptype = get_pack_info(args.pack)
+  packv = parse_version(packv)
+  info('Target pack info: name: {name}, version: {version}.'.format(name=packn, version=version2str(packv)))
+
+  # check whether target pack is a query pack of one of the supported languages
+  if not is_supported_pack(args.pack):
+    error('This pack is not suitable for injections! Only the following query packages are supported: ' + ', '.join(SUPPORTED_LANGUAGES))
+
+  # parse the given version
+  try:
+    given_version = parse_version(args.version)
+  except Exception as e:
+    error(
+      '"{version}" is not a proper semantic version: {errormsg}'.format(
+        version=origv,
+        errormsg=e.args[0]
+      )
+    )
+
+  # find the library pack that this query pack depends on
+  lib_pack = get_lib_pack(args.pack)
+  if lib_pack is None:
+    error('Did not find library pack dependency!')
+  info('Found library pack dependency at {path}.'.format(path=lib_pack))
+
+  # detect the root qll pack, e.g. "java.qll" / "python.qll" / ...
+  rootqll = get_pack_root_qll(lib_pack)
+  if not isfile(rootqll):
+    error('Did not find root qll for library pack "{lib_pack}"!'.format(lib_pack=lib_pack))
+  info('Found root qll "{rootqll}"!'.format(rootqll=rootqll))
+
+  # copy customizations file into library pack
+  customizations_lib = join(lib_pack, CUSTOMIZATIONS_LIB_NAME + '.qll')
+  info(
+    'Copying "{fromp}" to "{top}".'.format(
+      fromp=args.qll,
+      top=customizations_lib
+    )
+  )
+  shutil.copy(args.qll, customizations_lib)
+
+  # import customizations file within root query library
+  info('Injecting customizations into "{rootqll}" ...'.format(rootqll=rootqll))
+  inject_import(rootqll, CUSTOMIZATIONS_LIB_NAME)
+
+  # calculate package version by adding the given version and the target package version
+  final_version = packv
+  for i in range(0, 3):
+    final_version[i] = final_version[i] + given_version[i]
+  info('Final version is {version}.'.format(version=version2str(final_version)))
+
+  # set the final package name and version
+  set_pack_info(args.pack, args.name, version2str(final_version))
+
+
+def main():
+  parser = argparse.ArgumentParser(
+    prog='inject'
+  )
+  parser.add_argument(
+    '--qll',
+    help='CodeQL library file to inject',
+    required=True
+  )
+  parser.add_argument(
+      '--pack',
+      help='Path to the pack to inject into.',
+      default=None
+  )
+  parser.add_argument(
+      '--name',
+      help='The name of the resulting pack',
+      required=True
+  )
+  parser.add_argument(
+      '--version',
+      help='The version of the modifications (will be added to the version of the pack to be injected to)',
+      required=True
+  )
+  inject(parser.parse_args())
+
+
+main()

@@ -1,0 +1,22 @@
+name: 'CodeQL Inject'
+description: 'Inject a CodeQL library to customize the default queries to add sources, sinks, taint steps, ...'
+inputs:
+  qll:
+    description: 'CodeQL library to be injected'
+    required: true
+  pack:
+    description: 'The pack to inject into'
+    required: true
+  name:
+    description: 'The name of the resulting pack'
+    required: true
+  version:
+    description: 'The version of the modifications (will be added to the version of the pack to be injected to)'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: inject
+      run: |
+        python3 "${{ github.action_path }}/inject" --qll "${{ inputs.qll }}" --language "${{ inputs.pack }}" --name "${{ inputs.name }}" --version "${{ inputs.version }}"
+      shell: bash
