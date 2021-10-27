@@ -7,7 +7,7 @@ import json
 
 
 codeql_exec, github_token, target_pack, name, version, patterns = sys.argv[1:]
-env = os.environ()
+env = os.environ
 env.update({'GITHUB_TOKEN': github_token})
 
 
