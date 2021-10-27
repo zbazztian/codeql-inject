@@ -21,8 +21,7 @@ runs:
   steps:
     - name: inject
       run: |
-        ls /opt/hostedtoolcache/CodeQL/0.0.0-20211013/x64/
-        ls /opt/hostedtoolcache/CodeQL/0.0.0-20211013/x64/codeql/
+        rm -r "$(dirname "${{ inputs.codeql-path }}")/qlpacks"
         python3 \
           "${{ github.action_path }}/action_impl.py" \
           "${{ inputs.codeql-path }}" \
