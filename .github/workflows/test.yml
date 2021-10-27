@@ -25,11 +25,12 @@ on:
         required: false
 
 jobs:
-  permissions:
-    packages: write
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
 
     steps:
     - name: Checkout repository
