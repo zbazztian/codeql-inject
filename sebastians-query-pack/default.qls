@@ -1,0 +1,8 @@
+# https://codeql.github.com/docs/codeql-cli/creating-codeql-query-suites/
+
+- import: codeql-suites/java-code-scanning.qls
+  from: codeql/java-queries         # our query pack is based on the original one
+- exclude:
+    query filename:
+    - XSS.ql                        # we exclude the default XSS query...
+- query: custom-xss.ql              # ...and replace it with our customized one

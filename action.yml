@@ -21,8 +21,7 @@ runs:
   steps:
     - name: inject
       run: |
-        ls -lahrt
-        rm -r "$(dirname "${{ inputs.codeql-path }}")/qlpacks"
+        rm -r "$(dirname "${{ inputs.codeql-path }}")/qlpacks"   # to avoid bug in 'codeql pack download'
         python3 \
           "${{ github.action_path }}/action_impl.py" \
           "${{ inputs.codeql-path }}" \
