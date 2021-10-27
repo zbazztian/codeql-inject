@@ -42,12 +42,12 @@ def codeql(*args):
 j = json.loads(
   codeql(
     'pack', 'download',
-    '--search-path', '/adirectorywhichdoesnotexist',
-    '--additional-packs', '/adirectorywhichdoesnotexist',
+#    '--search-path', '/adirectorywhichdoesnotexist',
+#    '--additional-packs', '/adirectorywhichdoesnotexist',
+#    '-vvv',
+#    '--no-use-global-qlconfig',
     '--format', 'json',
     '--force',
-    '-vvv',
-    '--no-use-global-qlconfig',
     '--dir', 'downloaded_pack',
     target_pack
   )
