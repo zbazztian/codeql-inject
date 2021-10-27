@@ -62,5 +62,6 @@ inject.main([
 codeql(
   'pack', 'publish',
   '--threads', '0',
+  '-vv',
   target_pack_path
 )
