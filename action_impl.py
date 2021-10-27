@@ -5,7 +5,10 @@ from os.path import isfile, join
 import json
 
 
-codeql_exec, target_pack, name, version, patterns = sys.argv[1:]
+codeql_exec, github_token, target_pack, name, version, patterns = sys.argv[1:]
+env = os.environ()
+env.update({'GITHUB_TOKEN': github_token})
+
 
 if not isfile(codeql_exec):
   inject.error('Cannot find executable {exec}!'.format(exec=codeql_exec))
@@ -17,7 +20,8 @@ def run_impl(args):
     output = subprocess.run(
       args,
       capture_output=True,
-      check=True
+      check=True,
+      env=env
     ).stdout.decode()
     print(output, flush=True)
     return output
@@ -30,10 +34,6 @@ def run_impl(args):
     raise
 
 
-def run(*args):
-  return run_impl(list(args))
-
-
 def codeql(*args):
   args = [codeql_exec] + list(args)
   return run_impl(args)
@@ -42,10 +42,7 @@ def codeql(*args):
 j = json.loads(
   codeql(
     'pack', 'download',
-#    '--search-path', '/adirectorywhichdoesnotexist',
-#    '--additional-packs', '/adirectorywhichdoesnotexist',
-#    '-vvv',
-#    '--no-use-global-qlconfig',
+    '-vvv',
     '--format', 'json',
     '--force',
     '--dir', 'downloaded_pack',

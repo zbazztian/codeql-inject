@@ -16,6 +16,10 @@ inputs:
   codeql-path:
     description: 'Path of the CodeQL toolchain.'
     required: true
+  github_token:
+    description: 'GitHub API token with the required permissions to publish packages'
+    required: false
+    default: ${{ github.token }}
 runs:
   using: "composite"
   steps:
@@ -25,6 +29,7 @@ runs:
         python3 \
           "${{ github.action_path }}/action_impl.py" \
           "${{ inputs.codeql-path }}" \
+          "${{ inputs.github_token }}" \
           "${{ inputs.pack }}" \
           "${{ inputs.name }}" \
           "${{ inputs.version }}" \
