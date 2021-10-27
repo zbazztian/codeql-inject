@@ -4,16 +4,16 @@ on:
     inputs:
       version:
         description: 'Version of the pack to publish'
-        required: true
+        required: false
       name:
         description: 'Name of the pack to publish'
-        required: true
+        required: false
       pack:
         description: 'Pack to inject into.'
-        required: true
+        required: false
       pattern1:
         description: 'Injection pattern'
-        required: true
+        required: false
       pattern2:
         description: 'Include or exclude pattern'
         required: false
@@ -47,11 +47,19 @@ jobs:
       uses: zbazztian/codeql-inject@main
       with:
         patterns: |
-          ${{ github.event.inputs.pattern1 }}
-          ${{ github.event.inputs.pattern2 }}
-          ${{ github.event.inputs.pattern3 }}
-          ${{ github.event.inputs.pattern4 }}
-        pack: ${{ github.event.inputs.pack }}
-        name: ${{ github.event.inputs.name }}
-        version: ${{ github.event.inputs.version }}
+          templates/java-customizations.qll:Security/**/*.ql
+        pack: codeql/java-queries
+        name: zbazztian/testinger
+        version: 1.0.0
         codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
+
+
+
+#        patterns: |
+#          ${{ github.event.inputs.pattern1 }}
+#          ${{ github.event.inputs.pattern2 }}
+#          ${{ github.event.inputs.pattern3 }}
+#          ${{ github.event.inputs.pattern4 }}
+#        pack: ${{ github.event.inputs.pack }}
+#        name: ${{ github.event.inputs.name }}
+#        version: ${{ github.event.inputs.version }}
