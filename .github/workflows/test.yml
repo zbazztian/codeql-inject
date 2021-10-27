@@ -57,4 +57,4 @@ jobs:
 #        codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
     - name: publish
       run: |
-        "${{ steps.codeqltoolchain.outputs.codeql-path }}" pack publish -vv --threads 0 sebastians-query-pack
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" "${{ steps.codeqltoolchain.outputs.codeql-path }}" pack publish -vv --threads 0 sebastians-query-pack
