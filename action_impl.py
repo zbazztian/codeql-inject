@@ -47,6 +47,7 @@ j = json.loads(
     '--format', 'json',
     '--force',
     '-vvv',
+    '--no-use-global-qlconfig',
     '--dir', 'downloaded_pack',
     target_pack
   )
