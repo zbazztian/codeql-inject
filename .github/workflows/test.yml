@@ -1,0 +1,51 @@
+name: "Injection Test"
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version of the pack to publish'
+        required: true
+      name:
+        description: 'Name of the pack to publish'
+        required: true
+      pack:
+        description: 'Pack to inject into.'
+        required: true
+      pattern1:
+        description: 'Injection pattern'
+        required: true
+      pattern2:
+        description: 'Include or exclude pattern'
+        required: false
+      pattern3:
+        description: 'Include or exclude pattern'
+        required: false
+      pattern4:
+        description: 'Include or exclude pattern'
+        required: false
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      id:   codeqltoolchain
+      uses: github/codeql-action/init@v1
+
+    - name: codeql-inject
+      uses: zbazztian/codeql-inject@main
+      with:
+        patterns: |
+          ${{ github.event.inputs.pattern1 }}
+          ${{ github.event.inputs.pattern2 }}
+          ${{ github.event.inputs.pattern3 }}
+          ${{ github.event.inputs.pattern4 }}
+        pack: ${{ github.event.inputs.pack }}
+        name: ${{ github.event.inputs.name }}
+        version: ${{ github.event.inputs.version }}
+        codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
