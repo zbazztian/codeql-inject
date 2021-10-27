@@ -27,6 +27,5 @@ runs:
           "${{ inputs.pack }}" \
           "${{ inputs.name }}" \
           "${{ inputs.version }}" \
-          -- \
           "${{ inputs.patterns }}"
       shell: bash
