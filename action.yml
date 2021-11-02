@@ -13,6 +13,9 @@ inputs:
   codeql-path:
     description: 'Path of the CodeQL toolchain.'
     required: true
+  default_suite:
+    description: "Path to the pack's default suite."
+    required: true
   github_token:
     description: 'GitHub API token with the required permissions to publish packages'
     required: false
@@ -29,5 +32,6 @@ runs:
           "${{ inputs.github_token }}" \
           "${{ inputs.pack }}" \
           "${{ inputs.name }}" \
+          "${{ inputs.default_suite }}" \
           "${{ inputs.patterns }}"
       shell: bash

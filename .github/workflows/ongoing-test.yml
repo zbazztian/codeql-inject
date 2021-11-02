@@ -28,6 +28,7 @@ jobs:
       with:
         patterns: |
           templates/java-customizations.qll:Security/**/*.ql
-        pack: codeql/java-queries
+        default_suite: codeql-suites/java-code-scanning.qls
+        pack: zbazztian/java-queries
         name: zbazztian/modified-java-queries-test-ongoing
         codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}

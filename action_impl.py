@@ -8,7 +8,7 @@ import json
 import shutil
 
 pack_download_dir = 'codeql_inject_pack_downloads'
-codeql_exec, github_token, base_name, target_name, patterns = sys.argv[1:]
+codeql_exec, github_token, base_name, target_name, default_suite, patterns = sys.argv[1:]
 env = os.environ
 env.update({'GITHUB_TOKEN': github_token})
 
@@ -76,6 +76,7 @@ inject.main([
   '--pack', base_path,
   '--name', target_name,
   '--version', target_version,
+  '--default-suite', default_suite,
   '--',
   patterns
 ])

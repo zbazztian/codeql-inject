@@ -9,7 +9,11 @@ on:
       pack:
         description: 'Base pack (to inject into)'
         required: false
-        default: 'codeql/java-queries'
+        default: 'zbazztian/java-queries'
+      default_suite:
+        description: "Path to the pack's default query suite"
+        required: false
+        default: 'codeql-suites/java-code-scanning.qls'
       pattern1:
         description: 'Injection pattern'
         required: false
