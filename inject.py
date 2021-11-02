@@ -50,6 +50,14 @@ def set_pack_desc(pack, desc):
   write_file(join(pack, 'qlpack.yml'), desc)
 
 
+def get_pack_hash(pack):
+  return read_file(join(pack, 'codeql_inject_hash.qll'))
+
+
+def set_pack_hash(pack, h):
+  return write_file(join(pack, 'codeql_inject_hash.qll'), h)
+
+
 def get_pack_info(packdir):
   contents = get_pack_desc(packdir)
   nmatch = QLPACK_NAME_PATTERN.search(contents)
@@ -75,6 +83,10 @@ def parse_version(versionstr):
 
 def version2str(version):
   return '.'.join([str(v) for v in version])
+
+
+def add_versions(v1, v2):
+  return [v1[i] + v2[i] for i in range(0, 3)]
 
 
 def inject_import(qlpath, importname):
@@ -124,14 +136,13 @@ def inject(args):
   if not isdir(args.pack) or not isfile(join(args.pack, 'qlpack.yml')):
     error('"{pack}" is not a valid pack directory!'.format(pack=args.pack))
 
-  # get target package information
-  packn, packv = get_pack_info(args.pack)
-  packv = parse_version(packv)
-  info('Target pack info: name: {name}, version: {version}.'.format(name=packn, version=version2str(packv)))
+  # get base package information
+  base_pack_name, base_pack_version = get_pack_info(args.pack)
+  info('Base pack info: name: {name}, version: {version}.'.format(name=base_pack_name, version=base_pack_version))
 
   # parse the given version
   try:
-    given_version = parse_version(args.version)
+    parse_version(args.version)
   except Exception as e:
     error(
       '"{version}" is not a proper semantic version: {errormsg}'.format(
@@ -145,12 +156,12 @@ def inject(args):
   info('---')
   info('Given Patterns:')
   info('---')
-  for qll, target_pattern in args.patterns:
-    info('File to inject: {qll}, files to inject into: {pattern}'.format(qll=qll, pattern=target_pattern))
+  for qll, file_pattern in args.patterns:
+    info('File to inject: {qll}, files to inject into: {pattern}'.format(qll=qll, pattern=file_pattern))
   info('---')
 
   # copy customization files into pack and inject the given qlls
-  for qll, target_pattern in args.patterns:
+  for qll, file_pattern in args.patterns:
     qllcopyname = 'inject_{hashcode}'.format(hashcode=make_key(read_file(qll)))
     qllcopy = join(args.pack, qllcopyname + '.qll')
     if isfile(qllcopy):
@@ -164,21 +175,24 @@ def inject(args):
       )
       shutil.copy(qll, qllcopy)
 
-    hasTargets = False
-    for t in glob.iglob(join(args.pack, target_pattern), recursive=True):
-      hasTargets = True
+    resolvesToFiles = False
+    for t in glob.iglob(join(args.pack, file_pattern), recursive=True):
+      resolvesToFiles = True
       inject_import(t, qllcopyname)
-    if not hasTargets:
-      warning('Injection pattern "{pattern}" does not resolve to any file on disk!'.format(pattern=target_pattern))
-
-  # calculate package version by adding the given version and the target package version
-  final_version = packv
-  for i in range(0, 3):
-    final_version[i] = final_version[i] + given_version[i]
-  info('Final version is {version}.'.format(version=version2str(final_version)))
+    if not resolvesToFiles:
+      warning('Injection pattern "{pattern}" does not resolve to any file on disk!'.format(pattern=file_pattern))
 
   # set the final package name and version
-  set_pack_info(args.pack, args.name, version2str(final_version))
+  set_pack_info(args.pack, args.name, args.version)
+
+  # create package's hash file
+  info('Writing package hash...')
+  sha1 = hashlib.sha1()
+  for qll, file_pattern in args.patterns:
+    sha1.update(read_file(qll).encode('utf-8'))
+    sha1.update(file_pattern.encode('utf-8'))
+  sha1.update(base_pack_version.encode('utf-8'))
+  set_pack_hash(args.pack, sha1.hexdigest())
 
 
 def main(args):
@@ -187,17 +201,17 @@ def main(args):
   )
   parser.add_argument(
     '--pack',
-    help='Path to the pack to inject into.',
+    help='Path to the base pack',
     default=None
   )
   parser.add_argument(
     '--name',
-    help='The name of the resulting pack',
+    help='The name of the target pack',
     required=True
   )
   parser.add_argument(
     '--version',
-    help='The version of the modifications (will be added to the version of the pack to be injected to)',
+    help='The version of the target pack',
     required=True
   )
   parser.add_argument(

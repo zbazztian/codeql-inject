@@ -10,9 +10,6 @@ inputs:
   name:
     description: 'The name of the resulting pack'
     required: true
-  version:
-    description: 'The version of the modifications (will be added to the version of the pack to be injected to)'
-    required: true
   codeql-path:
     description: 'Path of the CodeQL toolchain.'
     required: true
@@ -32,6 +29,5 @@ runs:
           "${{ inputs.github_token }}" \
           "${{ inputs.pack }}" \
           "${{ inputs.name }}" \
-          "${{ inputs.version }}" \
           "${{ inputs.patterns }}"
       shell: bash
