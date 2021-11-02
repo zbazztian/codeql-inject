@@ -1,6 +1,22 @@
 import semmle.code.java.dataflow.FlowSources
 import semmle.code.java.dataflow.FlowSteps
 
+
+// Additional taint step: If an object is tainted, so are its methods' return values
+class TaintedObjectMA extends AdditionalTaintStep {
+  override predicate step(DataFlow::Node node1, DataFlow::Node node2) {
+    node1.asExpr() = node2.asExpr().(MethodAccess).getQualifier()
+  }
+}
+
+// Additional taint step: If an argument to a constructor is tainted, so is the constructed object
+class TaintedConstructorArg extends AdditionalTaintStep {
+  override predicate step(DataFlow::Node node1, DataFlow::Node node2) {
+    node1.asExpr() = node2.asExpr().(ConstructorCall).getAnArgument()
+  }
+}
+
+
 /////////////////////////// CUSTOMIZE HERE ////////////////////////////////////////////////////
 /*
 string taintedCalls() {
