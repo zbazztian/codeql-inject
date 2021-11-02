@@ -47,18 +47,10 @@ jobs:
       uses: zbazztian/codeql-inject@main
       with:
         patterns: |
-          templates/java-customizations.qll:Security/**/*.ql
-        pack: codeql/java-queries
-        name: zbazztian/modified-java-queries
+          ${{ github.event.inputs.pattern1 }}
+          ${{ github.event.inputs.pattern2 }}
+          ${{ github.event.inputs.pattern3 }}
+          ${{ github.event.inputs.pattern4 }}
+        pack: ${{ github.event.inputs.pack }}
+        name: ${{ github.event.inputs.name }}
         codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
-
-
-
-#        patterns: |
-#          ${{ github.event.inputs.pattern1 }}
-#          ${{ github.event.inputs.pattern2 }}
-#          ${{ github.event.inputs.pattern3 }}
-#          ${{ github.event.inputs.pattern4 }}
-#        pack: ${{ github.event.inputs.pack }}
-#        name: ${{ github.event.inputs.name }}
-#        version: ${{ github.event.inputs.version }}

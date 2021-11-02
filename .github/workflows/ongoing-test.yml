@@ -1,0 +1,33 @@
+name: "Ongoing Test"
+on:
+  schedule:
+    - cron: '45 22 * * 1'
+  push:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      actions: read
+      contents: read
+      security-events: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      id:   codeqltoolchain
+      uses: github/codeql-action/init@v1
+
+    - name: codeql-inject
+      uses: zbazztian/codeql-inject@main
+      with:
+        patterns: |
+          templates/java-customizations.qll:Security/**/*.ql
+        pack: codeql/java-queries
+        name: zbazztian/modified-java-queries-uptodate
+        codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
