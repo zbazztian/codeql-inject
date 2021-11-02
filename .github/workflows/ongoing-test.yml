@@ -29,5 +29,5 @@ jobs:
         patterns: |
           templates/java-customizations.qll:Security/**/*.ql
         pack: codeql/java-queries
-        name: zbazztian/modified-java-queries-uptodate
+        name: zbazztian/modified-java-queries-test-ongoing
         codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
