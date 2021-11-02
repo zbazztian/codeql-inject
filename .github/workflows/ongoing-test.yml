@@ -1,4 +1,4 @@
-name: "Ongoing Test"
+name: "Ongoing Injection Test"
 on:
   schedule:
     - cron: '45 22 * * 1'

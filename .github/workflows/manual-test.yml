@@ -1,4 +1,4 @@
-name: "Injection Test"
+name: "Manual Injection Test"
 on:
   workflow_dispatch:
     inputs:
