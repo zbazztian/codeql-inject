@@ -9,19 +9,19 @@ on:
         description: 'Name of the pack to publish'
         required: false
       pack:
-        description: 'Pack to inject into.'
+        description: 'Base pack (to inject into)'
         required: false
       pattern1:
         description: 'Injection pattern'
         required: false
       pattern2:
-        description: 'Include or exclude pattern'
+        description: 'Injection pattern'
         required: false
       pattern3:
-        description: 'Include or exclude pattern'
+        description: 'Injection pattern'
         required: false
       pattern4:
-        description: 'Include or exclude pattern'
+        description: 'Injection pattern'
         required: false
 
 jobs:
@@ -49,8 +49,7 @@ jobs:
         patterns: |
           templates/java-customizations.qll:Security/**/*.ql
         pack: codeql/java-queries
-        name: zbazztian/testinger
-        version: 1.0.0
+        name: zbazztian/modified-java-queries
         codeql-path: ${{ steps.codeqltoolchain.outputs.codeql-path }}
 
 
