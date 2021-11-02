@@ -11,6 +11,7 @@ import hashlib
 
 QLPACK_NAME_PATTERN = re.compile('^(name:\s+)(\S+)(.*)$', re.MULTILINE)
 QLPACK_VERSION_PATTERN = re.compile('^(version:\s+)(\S+)(.*)$', re.MULTILINE)
+QLPACK_DEFAULTSUITEFILE_PATTERN = re.compile('^(defaultSuiteFile:\s+)(\S+)(.*)$', re.MULTILINE)
 
 
 def make_key(s):
@@ -71,6 +72,23 @@ def set_pack_info(packdir, name, version):
   contents = get_pack_desc(packdir)
   contents = re.sub(QLPACK_NAME_PATTERN, '\g<1>' + name + '\g<3>', contents)
   contents = re.sub(QLPACK_VERSION_PATTERN, '\g<1>' + version + '\g<3>', contents)
+  set_pack_desc(packdir, contents)
+
+
+def get_pack_default_suite(packdir):
+  contents = get_pack_desc(packdir)
+  match = QLPACK_DEFAULTSUITEFILE_PATTERN.search(contents)
+  if not match:
+    return None
+  return match.group(2)
+
+
+def set_pack_default_suite(packdir, default_suite):
+  contents = get_pack_desc(packdir)
+  if get_pack_default_suite(packdir) is None:
+    contents = contents + '\ndefaultSuiteFile: ' + default_suite
+  else:
+    contents = re.sub(QLPACK_DEFAULTSUITEFILE_PATTERN, '\g<1>' + default_suite + '\g<3>', contents)
   set_pack_desc(packdir, contents)
 
 
@@ -140,6 +158,10 @@ def inject(args):
   base_pack_name, base_pack_version = get_pack_info(args.pack)
   info('Base pack info: name: {name}, version: {version}.'.format(name=base_pack_name, version=base_pack_version))
 
+  # check that the given default suite exists
+  if not isfile(join(args.pack, args.default_suite)):
+    error('"{suite}" is not a valid query suite!'.format(suite=args.default_suite))
+
   # parse the given version
   try:
     parse_version(args.version)
@@ -182,8 +204,9 @@ def inject(args):
     if not resolvesToFiles:
       warning('Injection pattern "{pattern}" does not resolve to any file on disk!'.format(pattern=file_pattern))
 
-  # set the final package name and version
+  # set the final package name, version and default suite
   set_pack_info(args.pack, args.name, args.version)
+  set_pack_default_suite(args.pack, args.default_suite)
 
   # create package's hash file
   info('Writing package hash...')
@@ -192,6 +215,7 @@ def inject(args):
     sha1.update(read_file(qll).encode('utf-8'))
     sha1.update(file_pattern.encode('utf-8'))
   sha1.update(base_pack_version.encode('utf-8'))
+  sha1.update(args.default_suite.encode('utf-8'))
   set_pack_hash(args.pack, sha1.hexdigest())
 
 
@@ -212,6 +236,11 @@ def main(args):
   parser.add_argument(
     '--version',
     help='The version of the target pack',
+    required=True
+  )
+  parser.add_argument(
+    '--default-suite',
+    help='The default query suite to execute',
     required=True
   )
   parser.add_argument(
