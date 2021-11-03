@@ -2,6 +2,19 @@ import semmle.code.java.dataflow.FlowSources
 import semmle.code.java.dataflow.FlowSteps
 
 
+// additional sources: Consider return values of ServletRequest methods to be tainted (potentially noisy)
+class ServletRequestSource extends RemoteFlowSource {
+  ServletRequestSource() {
+    exists(Method m |
+      this.asExpr().(MethodAccess).getMethod() = m and
+      m.getDeclaringType().getAnAncestor*().getQualifiedName() = "javax.servlet.ServletRequest"
+    )
+  }
+
+  override string getSourceType() { result = "ServletRequest method return value" }
+}
+
+
 // Additional taint step: If an object is tainted, so are its methods' return values
 class TaintedObjectMA extends AdditionalTaintStep {
   override predicate step(DataFlow::Node node1, DataFlow::Node node2) {
